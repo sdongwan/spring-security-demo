@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:social="http://www.springframework.org/schema/c"
+       xmlns:security="http://www.springframework.org/schema/p"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+        <social:jdbc-connection-repository
+                data-source-ref="dataSource"
+                connection-signup-ref="accountConnectionSignup"/>
+
+
+        <bean class="com.sdongwan.social.qq.factory.QQConnectionFactory">
+            <constructor-arg name="appId" value="${spring.social.qq.app-id}"/>
+            <constructor-arg name="appSecret" value="${spring.social.qq.app-secret}"/>
+            <constructor-arg name="providerId" value="${spring.social.qq.provider-id}"/>
+        </bean>
+
+
+    <!-- 配置不拦截的资源 -->
+    <security:http pattern="/login.jsp" security="none"/>
+    <security:http pattern="/failer.html" security="none"/>
+    <security:http pattern="/failer.jsp" security="none"/>
+    <security:http pattern="/js/**" security="none"/>
+    <security:http pattern="/css/**" security="none"/>
+    <security:http pattern="/img/**" security="none"/>
+    <security:http pattern="/plugins/**" security="none"/>
+    <security:http pattern="/code/image" security="none"/>
+    <security:http pattern="/sms/code" security="none"/>
+
+    <!--
+    	配置具体的规则
+    	auto-config="true"	不用自己编写登录的页面，框架提供默认登录页面
+    	use-expressions="false"	是否使用SPEL表达式
+    -->
+    <security:http auto-config="false" use-expressions="false">
+        <!-- 配置具体的拦截的规则 pattern="请求路径的规则" access="访问系统的人，必须有ROLE_USER的角色" -->
+        <security:intercept-url pattern="/**" access="ROLE_USER,ROLE_ADMIN"/>
+
+        <!-- 定义跳转的具体的页面 login-processing-url="/login.do" -->
+        <security:form-login
+                login-page="/login.jsp"
+                default-target-url="/login.jsp"
+                login-processing-url="/login"
+                username-parameter="username"
+                password-parameter="password"
+                authentication-success-forward-url="/login"
+                authentication-failure-url="/failer.jsp"
+        />
+
+        <security:remember-me
+                user-service-ref="sysUserAuthService"
+                token-validity-seconds="300"
+                token-repository-ref="tokenRepository"
+                remember-me-cookie="remember-me"
+                remember-me-parameter="remember_me"/>
+
+        <!-- 关闭跨域请求 -->
+        <security:csrf disabled="true"/>
+
+        <security:custom-filter ref="valideCodeFliter" before="FORM_LOGIN_FILTER"/>
+        <!-- 退出 -->
+        <security:logout invalidate-session="true" logout-url="/logout.do" logout-success-url="/login.jsp" />
+    </security:http>
+
+
+
+    <bean id="tokenRepository" class="org.springframework.security.web.authentication.rememberme.JdbcTokenRepositoryImpl">
+        <property name="dataSource" ref="dataSource"/>
+        <property name="createTableOnStartup" value="false"/>
+    </bean>
+
+    <bean id="valideCodeFliter" class="com.sdongwan.security.fliter.ValidateCodeFliter">
+        <property name="authenticationFailureHandler" ref="authenticationFailureHandler"/>
+    </bean>
+
+    <bean id="myAuthenticationSuccessHandler" class="com.sdongwan.security.handler.MyAuthenticationSuccessHandler"/>
+
+    <bean id="authenticationFailureHandler" class="org.springframework.security.web.authentication.SimpleUrlAuthenticationFailureHandler">
+        <property name="defaultFailureUrl" value="/login.jsp"/>
+        <property name="useForward" value="true"/>
+    </bean>
+
+    <!-- 切换成数据库中的用户名和密码 -->
+    <security:authentication-manager alias="authenticationManager" erase-credentials="false">
+        <security:authentication-provider user-service-ref="QQUserDetailService">
+            <!-- 配置加密的方式 -->
+            <security:password-encoder ref="passwordEncoder"/>
+        </security:authentication-provider>
+
+        <security:authentication-provider ref="smsCodeAuthenticationProvider">
+        </security:authentication-provider>
+    </security:authentication-manager>
+
+    <!-- 配置加密类 -->
+    <bean id="passwordEncoder" class="org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder"/>
+
+    <bean id="smsCodeAuthenticationProvider" class="com.sdongwan.security.provider.SmsCodeAuthenticationProvider">
+    </bean>
+
+</beans>

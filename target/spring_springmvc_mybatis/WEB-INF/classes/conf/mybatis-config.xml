@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE configuration PUBLIC "-//mybatis.org//DTD Config 3.0//EN" "http://mybatis.org/dtd/mybatis-3-config.dtd">
+<configuration>
+    <typeAliases>
+        <!-- 定义别名-->
+        <typeAlias type="com.sdongwan.ssm.bean.StudentBean" alias="studentbean"/>
+    </typeAliases>
+
+    <mappers>
+        <!--使用"/"分隔，而不是"." -->
+        <mapper resource="com/sdongwan/ssm/mapper/StudentsMapper.xml"/>
+    </mappers>
+
+</configuration>

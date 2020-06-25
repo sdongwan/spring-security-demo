@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.sdongwan.ssm.mapper.StudentMapper">
+    <resultMap id="student" type="studentbean">
+        <id column="id" property="id" jdbcType="BIGINT" javaType="int"/>
+        <result column="name" property="name" javaType="string" jdbcType="VARCHAR"/>
+        <result column="gender" property="gender" javaType="string" jdbcType="VARCHAR" />
+    </resultMap>
+
+    <select id="selectStudentById" parameterType="int" resultType="studentbean">
+        <!--因为使用了自动映射，所以as重命名很重要，保证名字与实体的属性名字相同才可以自动映射 -->
+        SELECT id ,name ,gender FROM t_student WHERE id=#{id};
+    </select>
+    <insert id="insertStudent" parameterType="studentbean">
+        INSERT INTO  t_student(id,name,gender) VALUES (#{id},#{name},#{gender})
+    </insert>
+
+    <delete id="deleteStudentById" parameterType="int">
+        DELETE FROM t_student WHERE id=#{id};
+    </delete>
+
+    <update id="updateStudenById" parameterType="int">
+
+      UPDATE t_student SET  name =#{name}, gender=#{gender} WHERE id=#{id};
+
+     </update>
+
+
+</mapper>
